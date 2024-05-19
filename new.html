@@ -14,18 +14,15 @@
             margin: 0;
             background-color: #f0f0f0;
         }
-        h1 {
-            margin-bottom: 20px;
-        }
         #videos {
             display: flex;
             justify-content: center;
             gap: 20px;
         }
         video {
-            width: 300px;
-            height: 200px;
-            border: 1px solid #ccc;
+            width: 450px;
+            height: 300px;
+            border: 3px solid #ccc;
         }
         #controls {
             margin-top: 20px;
@@ -45,7 +42,6 @@
     <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-firestore.js"></script>
 </head>
 <body>
-    <h1>Felhasználói oldal</h1>
     <div id="videos">
         <video id="localVideo" autoplay muted></video>
         <video id="remoteVideo" autoplay></video>
