@@ -6,48 +6,6 @@
     <title>Felhasználói oldal</title>
     <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-firestore.js"></script>
-<style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f2f2f2;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-h1 {
-    color: #333;
-}
-
-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #45a049;
-}
-
-p {
-    color: #666;
-}
-
-video {
-    width: 100%;
-    max-width: 400px;
-    margin-top: 20px;
-}
-
-</style>
 </head>
 <body>
     <h1>Felhasználói oldal</h1>
@@ -76,7 +34,7 @@ video {
         let localStream;
         let peerConnection;
 
-        requestButton.addEventListener('click', async () => {
+        async function initiateCall() {
             status.textContent = 'Várakozás...';
             const callDoc = db.collection('calls').doc();
             const offerCandidates = callDoc.collection('offerCandidates');
@@ -88,49 +46,59 @@ video {
                 ]
             });
 
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('localVideo').srcObject = localStream;
-                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+            // Capture local stream
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('localVideo').srcObject = localStream;
 
-                peerConnection.onicecandidate = event => {
-                    if (event.candidate) {
-                        offerCandidates.add(event.candidate.toJSON());
-                    }
-                };
+            // Add local stream tracks to peer connection
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-                const offerDescription = await peerConnection.createOffer();
-                await peerConnection.setLocalDescription(offerDescription);
+            // Listen for remote stream
+            peerConnection.ontrack = event => {
+                const [remoteStream] = event.streams;
+                document.getElementById('remoteVideo').srcObject = remoteStream;
+            };
 
-                const offer = {
-                    sdp: offerDescription.sdp,
-                    type: offerDescription.type,
-                };
+            // Listen for ICE candidates
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    offerCandidates.add(event.candidate.toJSON());
+                }
+            };
 
-                await callDoc.set({ offer });
-                status.textContent = 'Kérés elküldve, várakozás az alkalmazottra...';
+            // Create offer
+            const offerDescription = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offerDescription);
 
-                callDoc.onSnapshot(snapshot => {
-                    const data = snapshot.data();
-                    if (!peerConnection.currentRemoteDescription && data?.answer) {
-                        const answerDescription = new RTCSessionDescription(data.answer);
-                        peerConnection.setRemoteDescription(answerDescription);
+            // Send offer to Firestore
+            const offer = {
+                sdp: offerDescription.sdp,
+                type: offerDescription.type,
+            };
+            await callDoc.set({ offer });
+            status.textContent = 'Kérés elküldve, várakozás az alkalmazottra...';
+
+            // Listen for remote answer
+            callDoc.onSnapshot(snapshot => {
+                const data = snapshot.data();
+                if (!peerConnection.currentRemoteDescription && data?.answer) {
+                    const answerDescription = new RTCSessionDescription(data.answer);
+                    peerConnection.setRemoteDescription(answerDescription);
+                }
+            });
+
+            // Listen for remote ICE candidates
+            answerCandidates.onSnapshot(snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const candidate = new RTCIceCandidate(change.doc.data());
+                        peerConnection.addIceCandidate(candidate);
                     }
                 });
+            });
+        }
 
-                answerCandidates.onSnapshot(snapshot => {
-                    snapshot.docChanges().forEach(change => {
-                        if (change.type === 'added') {
-                            const candidate = new RTCIceCandidate(change.doc.data());
-                            peerConnection.addIceCandidate(candidate);
-                        }
-                    });
-                });
-            } catch (error) {
-                console.error('Error accessing media devices:', error);
-                status.textContent = 'Hiba történt a média eszközök elérésekor.';
-            }
-        });
+        requestButton.addEventListener('click', initiateCall);
     </script>
 </body>
 </html>
