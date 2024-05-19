@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Felhasználói oldal</title>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-firestore.js"></script>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f2f2f2;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    color: #333;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+p {
+    color: #666;
+}
+
+video {
+    width: 100%;
+    max-width: 400px;
+    margin-top: 20px;
+}
+
+</style>
+</head>
+<body>
+    <h1>Felhasználói oldal</h1>
+    <button id="requestButton">Kérés küldése</button>
+    <p id="status">Nincs aktív kérés</p>
+    <video id="localVideo" autoplay muted></video>
+    <video id="remoteVideo" autoplay></video>
+
+    <script>
+        // Firebase konfiguráció
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4dmIepWRyWfxLkI7BrKPolW93tewgFik",
+            authDomain: "kmk-ea888.firebaseapp.com",
+            projectId: "kmk-ea888",
+            storageBucket: "kmk-ea888.appspot.com",
+            messagingSenderId: "416875221219",
+            appId: "1:416875221219:web:b3090211d5db41589e35d6",
+            measurementId: "G-CDW3RB37WD"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const requestButton = document.getElementById('requestButton');
+        const status = document.getElementById('status');
+        let localStream;
+        let peerConnection;
+
+        requestButton.addEventListener('click', async () => {
+            status.textContent = 'Várakozás...';
+            const callDoc = db.collection('calls').doc();
+            const offerCandidates = callDoc.collection('offerCandidates');
+            const answerCandidates = callDoc.collection('answerCandidates');
+
+            peerConnection = new RTCPeerConnection({
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' }
+                ]
+            });
+
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('localVideo').srcObject = localStream;
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                peerConnection.onicecandidate = event => {
+                    if (event.candidate) {
+                        offerCandidates.add(event.candidate.toJSON());
+                    }
+                };
+
+                const offerDescription = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offerDescription);
+
+                const offer = {
+                    sdp: offerDescription.sdp,
+                    type: offerDescription.type,
+                };
+
+                await callDoc.set({ offer });
+                status.textContent = 'Kérés elküldve, várakozás az alkalmazottra...';
+
+                callDoc.onSnapshot(snapshot => {
+                    const data = snapshot.data();
+                    if (!peerConnection.currentRemoteDescription && data?.answer) {
+                        const answerDescription = new RTCSessionDescription(data.answer);
+                        peerConnection.setRemoteDescription(answerDescription);
+                    }
+                });
+
+                answerCandidates.onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const candidate = new RTCIceCandidate(change.doc.data());
+                            peerConnection.addIceCandidate(candidate);
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+                status.textContent = 'Hiba történt a média eszközök elérésekor.';
+            }
+        });
+    </script>
+</body>
+</html>
