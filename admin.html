@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alkalmazotti oldal</title>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-firestore.js"></script>
+</head>
+<body>
+    <h1>Alkalmazotti oldal</h1>
+    <button id="answerButton">Kérés fogadása</button>
+    <p id="status">Nincs aktív kérés</p>
+    <video id="localVideo" autoplay muted></video>
+    <video id="remoteVideo" autoplay></video>
+
+    <script>
+        // Firebase konfiguráció
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4dmIepWRyWfxLkI7BrKPolW93tewgFik",
+            authDomain: "kmk-ea888.firebaseapp.com",
+            projectId: "kmk-ea888",
+            storageBucket: "kmk-ea888.appspot.com",
+            messagingSenderId: "416875221219",
+            appId: "1:416875221219:web:b3090211d5db41589e35d6",
+            measurementId: "G-CDW3RB37WD"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const answerButton = document.getElementById('answerButton');
+        const status = document.getElementById('status');
+        let localStream;
+        let peerConnection;
+
+        async function answerCall() {
+            status.textContent = 'Kérés fogadása...';
+
+            // Keresd meg az első kérést (itt feltételezzük, hogy egyetlen kérés van, de ezt ki lehet egészíteni logikával, hogy az adott kérést válaszd ki)
+            const callQuerySnapshot = await db.collection('calls').get();
+            const callDoc = callQuerySnapshot.docs[0];
+            const offerCandidates = callDoc.ref.collection('offerCandidates');
+            const answerCandidates = callDoc.ref.collection('answerCandidates');
+
+            peerConnection = new RTCPeerConnection({
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' }
+                ]
+            });
+
+            // Capture local stream
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('localVideo').srcObject = localStream;
+
+            // Add local stream tracks to peer connection
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+            // Listen for remote stream
+            peerConnection.ontrack = event => {
+                const [remoteStream] = event.streams;
+                document.getElementById('remoteVideo').srcObject = remoteStream;
+            };
+
+            // Listen for ICE candidates
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    answerCandidates.add(event.candidate.toJSON());
+                }
+            };
+
+            // Get offer from Firestore
+            const callData = callDoc.data();
+            const offerDescription = callData.offer;
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offerDescription));
+
+            // Create answer
+            const answerDescription = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answerDescription);
+
+            // Send answer to Firestore
+            const answer = {
+                sdp: answerDescription.sdp,
+                type: answerDescription.type,
+            };
+            await callDoc.ref.update({ answer });
+
+            // Listen for remote ICE candidates
+            offerCandidates.onSnapshot(snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const candidate = new RTCIceCandidate(change.doc.data());
+                        peerConnection.addIceCandidate(candidate);
+                    }
+                });
+            });
+
+            status.textContent = 'Kapcsolódva';
+        }
+
+        answerButton.addEventListener('click', answerCall);
+    </script>
+</body>
+</html>
