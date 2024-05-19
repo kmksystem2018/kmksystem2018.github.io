@@ -4,15 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Felhasználói oldal</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #videos {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        video {
+            width: 300px;
+            height: 200px;
+            border: 1px solid #ccc;
+        }
+        #controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #status {
+            margin-top: 10px;
+        }
+    </style>
     <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-firestore.js"></script>
 </head>
 <body>
     <h1>Felhasználói oldal</h1>
-    <button id="requestButton">Kérés küldése</button>
+    <div id="videos">
+        <video id="localVideo" autoplay muted></video>
+        <video id="remoteVideo" autoplay></video>
+    </div>
+    <div id="controls">
+        <button id="requestButton">Kérés küldése</button>
+        <button id="endCallButton">Hívás befejezése</button>
+    </div>
     <p id="status">Nincs aktív kérés</p>
-    <video id="localVideo" autoplay muted></video>
-    <video id="remoteVideo" autoplay></video>
 
     <script>
         // Firebase konfiguráció
@@ -30,6 +72,7 @@
         const db = firebase.firestore();
 
         const requestButton = document.getElementById('requestButton');
+        const endCallButton = document.getElementById('endCallButton');
         const status = document.getElementById('status');
         let localStream;
         let peerConnection;
@@ -98,7 +141,16 @@
             });
         }
 
+        function endCall() {
+            peerConnection.close();
+            localStream.getTracks().forEach(track => track.stop());
+            document.getElementById('localVideo').srcObject = null;
+            document.getElementById('remoteVideo').srcObject = null;
+            status.textContent = 'Hívás befejezve';
+        }
+
         requestButton.addEventListener('click', initiateCall);
+        endCallButton.addEventListener('click', endCall);
     </script>
 </body>
 </html>
