@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin rendszer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input, button {
+            margin: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<div id="content">
+    <h2>TÖRLÉS</h2>
+
+    <table id="hours-table">
+        <thead>
+        <tr>
+            <th>Küldő</th>
+            <th>Üzenet</th>
+            <th>Idő</th>
+            <th>Módosítás</th>
+        </tr>
+        </thead>
+        <tbody id="hours-body">
+        </tbody>
+    </table>
+</div>
+<script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-firestore.js"></script>
+<script>
+    // Firebase konfiguráció
+     const firebaseConfig = {
+            apiKey: "AIzaSyA4dmIepWRyWfxLkI7BrKPolW93tewgFik",
+            authDomain: "kmk-ea888.firebaseapp.com",
+            projectId: "kmk-ea888",
+            storageBucket: "kmk-ea888.appspot.com",
+            messagingSenderId: "416875221219",
+            appId: "1:416875221219:web:b3090211d5db41589e35d6",
+            measurementId: "G-CDW3RB37WD"
+        };
+
+    // Firebase inicializálása
+    firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.firestore();
+
+    const hoursTable = document.getElementById('hours-body');
+
+    // Óra törlése
+    document.getElementById('hours-table').addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+            const id = e.target.getAttribute('data-id');
+            db.collection('calls').doc(id).delete()
+                .then(() => {
+                    console.log('Document successfully deleted!');
+                })
+                .catch((error) => {
+                    console.error('Error removing document: ', error);
+                });
+        }
+    });
+
+    db.collection('calls').onSnapshot(snapshot => {
+        // Töröljük az előző adatokat
+        hoursTable.innerHTML = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            renderHours(data, doc.id);
+        });
+    });
+
+    // Rendereljük az órákat a táblázatba
+    function renderHours(data, id) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${data.sender}</td>
+            <td>${data.text}</td>
+            <td>${data.timestamp}</td>
+            <td><button class="delete-btn" data-id="${id}">Törlés</button></td>
+        `;
+        hoursTable.appendChild(tr);
+    }
+</script>
+</body>
+</html>
