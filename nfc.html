@@ -1,60 +1,31 @@
-<!DOCTYPE html>
-<html lang="hu">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC Példa</title>
-</head>
-<body>
-    <h1>NFC Példa</h1>
-    <button id="readNfc">NFC Olvasása</button>
-    <button id="writeNfc">NFC Írása</button>
-    <p id="nfcData">Az NFC adat itt jelenik meg</p>
 
-    <script>
-        document.getElementById('readNfc').addEventListener('click', async () => {
-            if ('NDEFReader' in window) {
-                const permission = confirm("Engedélyezed az NFC használatát az olvasáshoz?");
-                if (permission) {
-                    try {
-                        const ndef = new NDEFReader();
-                        await ndef.scan();
-                        ndef.onreading = event => {
-                            const decoder = new TextDecoder();
-                            for (const record of event.message.records) {
-                               alert(`Rekord típusa: ${record.recordType}`);
-                                alert(`MIME típus: ${record.mediaType}`);
-                                alert(`Adat: ${decoder.decode(record.data)}`);
-                                document.getElementById('nfcData').textContent = decoder.decode(record.data);
-                            }
-                        };
-                    } catch (error) {
-                        console.error(`Hiba az NFC olvasásakor: ${error}`);
-                        alert(`Hiba az NFC olvasásakor: ${error}`);
-                    }
-                }
-            } else {
-                alert("Az NFC nem támogatott ezen a készüléken vagy böngészőben.");
-            }
-        });
+---
+feature_name: Web NFC
+chrome_version: 89
+feature_id: 6261030015467520
+check_min_version: true
+---
 
-        document.getElementById('writeNfc').addEventListener('click', async () => {
-            if ('NDEFReader' in window) {
-                const permission = confirm("Engedélyezed az NFC használatát az íráshoz?");
-                if (permission) {
-                    try {
-                        const ndef = new NDEFReader();
-                        await ndef.write("Helló NFC");
-                        alert("NFC címke írva");
-                        document.getElementById('nfcData').textContent = "NFC címke írva 'Helló NFC' üzenettel";
-                    } catch (error) {
-                        alert(`Hiba az NFC írásakor: ${error}`);
-                    }
-                }
-            } else {
-                alert("Az NFC nem támogatott ezen a készüléken vagy böngészőben.");
-            }
-        });
-    </script>
-</body>
-</html>
+<h3>Background</h3>
+<p>
+Web NFC aims to provide sites the ability to read and write to NFC tags when
+they are brought in close proximity to the user’s device (usually 5-10 cm, 2-4
+inches). The current scope is limited to NDEF, a lightweight binary message
+format. Low-level I/O operations (e.g. ISO-DEP, NFC-A/B, NFC-F) and Host-based
+Card Emulation (HCE) are not supported within the current scope.
+</p>
+
+<button id="scanButton">Scan</button>
+<button id="writeButton">Write</button>
+<button id="makeReadOnlyButton">Make Read-Only</button>
+
+{% include output_helper.html initial_output_content=initial_output_content %}
+
+<script>
+log = ChromeSamples.log;
+
+if (!("NDEFReader" in window))
+  ChromeSamples.setStatus("Web NFC is not available. Use Chrome on Android.");
+</script>
+
+{% include js_snippet.html filename='index.js' %}
