@@ -13,31 +13,46 @@
 
     <script>
         document.getElementById('readNfc').addEventListener('click', async () => {
-            try {
-                const ndef = new NDEFReader();
-                await ndef.scan();
-                ndef.onreading = event => {
-                    const decoder = new TextDecoder();
-                    for (const record of event.message.records) {
-                        console.log(`Rekord típusa: ${record.recordType}`);
-                        console.log(`MIME típus: ${record.mediaType}`);
-                        console.log(`Adat: ${decoder.decode(record.data)}`);
-                        document.getElementById('nfcData').textContent = decoder.decode(record.data);
+            if ('NDEFReader' in window) {
+                const permission = confirm("Engedélyezed az NFC használatát az olvasáshoz?");
+                if (permission) {
+                    try {
+                        const ndef = new NDEFReader();
+                        await ndef.scan();
+                        ndef.onreading = event => {
+                            const decoder = new TextDecoder();
+                            for (const record of event.message.records) {
+                               alert(`Rekord típusa: ${record.recordType}`);
+                                alert(`MIME típus: ${record.mediaType}`);
+                                alert(`Adat: ${decoder.decode(record.data)}`);
+                                document.getElementById('nfcData').textContent = decoder.decode(record.data);
+                            }
+                        };
+                    } catch (error) {
+                        console.error(`Hiba az NFC olvasásakor: ${error}`);
+                        alert(`Hiba az NFC olvasásakor: ${error}`);
                     }
-                };
-            } catch (error) {
-                console.error(`Hiba: ${error}`);
+                }
+            } else {
+                alert("Az NFC nem támogatott ezen a készüléken vagy böngészőben.");
             }
         });
 
         document.getElementById('writeNfc').addEventListener('click', async () => {
-            try {
-                const ndef = new NDEFReader();
-                await ndef.write("Helló NFC");
-                console.log("NFC címke írva");
-                document.getElementById('nfcData').textContent = "NFC címke írva 'Helló NFC' üzenettel";
-            } catch (error) {
-                console.error(`Hiba: ${error}`);
+            if ('NDEFReader' in window) {
+                const permission = confirm("Engedélyezed az NFC használatát az íráshoz?");
+                if (permission) {
+                    try {
+                        const ndef = new NDEFReader();
+                        await ndef.write("Helló NFC");
+                        alert("NFC címke írva");
+                        document.getElementById('nfcData').textContent = "NFC címke írva 'Helló NFC' üzenettel";
+                    } catch (error) {
+                        alert(`Hiba az NFC írásakor: ${error}`);
+                    }
+                }
+            } else {
+                alert("Az NFC nem támogatott ezen a készüléken vagy böngészőben.");
             }
         });
     </script>
