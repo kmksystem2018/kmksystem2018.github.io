@@ -4,6 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NFC Példa</title>
+    <!-- Firebase konfiguráció -->
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-database.js"></script>
+    <script>
+      // Firebase konfiguráció inicializálása
+const firebaseConfig = {
+  apiKey: "AIzaSyCP6ZeA0rsqizHuFyvHHpg-Z1u4wbBYCVk",
+  authDomain: "kmk-db.firebaseapp.com",
+  databaseURL: "https://kmk-db-default-rtdb.firebaseio.com",
+  projectId: "kmk-db",
+  storageBucket: "kmk-db.appspot.com",
+  messagingSenderId: "227984089329",
+  appId: "1:227984089329:web:94a39135b4d44edbd30950",
+  measurementId: "G-SC4ECGKRZR"
+};
+      firebase.initializeApp(firebaseConfig);
+      
+      // Firebase Realtime Database referencia
+      const database = firebase.database();
+    </script>
 </head>
 <body>
     <h1>NFC Példa</h1>
@@ -14,21 +34,27 @@
     <script>
         document.getElementById('readNfc').addEventListener('click', async () => {
             if ('NDEFReader' in window) {
-                try {
-                    const ndef = new NDEFReader();
-                    await ndef.scan();
-                    ndef.onreading = event => {
-                        const decoder = new TextDecoder();
-                        for (const record of event.message.records) {
-                            console.log(`Rekord típusa: ${record.recordType}`);
-                            console.log(`MIME típus: ${record.mediaType}`);
-                            console.log(`Adat: ${decoder.decode(record.data)}`);
-                            document.getElementById('nfcData').textContent = decoder.decode(record.data);
-                        }
-                    };
-                } catch (error) {
-                    console.error(`Hiba az NFC olvasásakor: ${error}`);
-                    alert(`Hiba az NFC olvasásakor: ${error}`);
+                const permission = confirm("Engedélyezed az NFC használatát az olvasáshoz?");
+                if (permission) {
+                    try {
+                        const ndef = new NDEFReader();
+                        await ndef.scan();
+                        ndef.onreading = event => {
+                            const decoder = new TextDecoder();
+                            for (const record of event.message.records) {
+                                console.log(`Rekord típusa: ${record.recordType}`);
+                                console.log(`MIME típus: ${record.mediaType}`);
+                                console.log(`Adat: ${decoder.decode(record.data)}`);
+                                const nfcData = decoder.decode(record.data);
+                                document.getElementById('nfcData').textContent = nfcData;
+                                // Adat küldése a Firebase Realtime Database-nek
+                                database.ref('nfcData').set(nfcData);
+                            }
+                        };
+                    } catch (error) {
+                        console.error(`Hiba az NFC olvasásakor: ${error}`);
+                        alert(`Hiba az NFC olvasásakor: ${error}`);
+                    }
                 }
             } else {
                 alert("Az NFC nem támogatott ezen a készüléken vagy böngészőben.");
@@ -37,14 +63,19 @@
 
         document.getElementById('writeNfc').addEventListener('click', async () => {
             if ('NDEFReader' in window) {
-                try {
-                    const ndef = new NDEFReader();
-                    await ndef.write("Helló NFC");
-                    console.log("NFC címke írva");
-                    document.getElementById('nfcData').textContent = "NFC címke írva 'Helló NFC' üzenettel";
-                } catch (error) {
-                    console.error(`Hiba az NFC írásakor: ${error}`);
-                    alert(`Hiba az NFC írásakor: ${error}`);
+                const permission = confirm("Engedélyezed az NFC használatát az íráshoz?");
+                if (permission) {
+                    try {
+                        const ndef = new NDEFReader();
+                        await ndef.write("Helló NFC");
+                        console.log("NFC címke írva");
+                        document.getElementById('nfcData').textContent = "NFC címke írva 'Helló NFC' üzenettel";
+                        // Adat küldése a Firebase Realtime Database-nek
+                        database.ref('nfcData').set("Helló NFC");
+                    } catch (error) {
+                        console.error(`Hiba az NFC írásakor: ${error}`);
+                        alert(`Hiba az NFC írásakor: ${error}`);
+                    }
                 }
             } else {
                 alert("Az NFC nem támogatott ezen a készüléken vagy böngészőben.");
