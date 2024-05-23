@@ -48,7 +48,11 @@ const firebaseConfig = {
                                 const nfcData = decoder.decode(record.data);
                                 document.getElementById('nfcData').textContent = nfcData;
                                 // Adat küldése a Firebase Realtime Database-nek
-                                database.ref('nfcData').set(nfcData);
+                                var adatbazis = firebase.database().ref('keresek');
+                                adatbazis.push({
+                                idopecset: Date.now(),
+                                data: nfcData;
+            });
                             }
                         };
                     } catch (error) {
