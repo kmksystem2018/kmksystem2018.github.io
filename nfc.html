@@ -48,7 +48,7 @@ const firebaseConfig = {
                                 const nfcData = decoder.decode(record.data);
                                 document.getElementById('nfcData').textContent = nfcData;
                                 // Adat küldése a Firebase Realtime Database-nek
-                                var adatbazis = firebase.database().ref('keresek');
+                                var adatbazis = firebase.database().ref('nfcData');
                                 adatbazis.push({
                                 idopecset: Date.now(),
                                 data: nfcData;
