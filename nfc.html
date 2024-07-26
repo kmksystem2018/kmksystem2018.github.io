@@ -3,88 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC Példa</title>
-    <!-- Firebase konfiguráció -->
+    <title>NFC Pont Adó Rendszer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #transactions {
+            margin-top: 20px;
+            width: 80%;
+            max-width: 600px;
+            text-align: left;
+        }
+        button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
     <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-database.js"></script>
-    <script>
-      // Firebase konfiguráció inicializálása
-const firebaseConfig = {
-  apiKey: "AIzaSyCP6ZeA0rsqizHuFyvHHpg-Z1u4wbBYCVk",
-  authDomain: "kmk-db.firebaseapp.com",
-  databaseURL: "https://kmk-db-default-rtdb.firebaseio.com",
-  projectId: "kmk-db",
-  storageBucket: "kmk-db.appspot.com",
-  messagingSenderId: "227984089329",
-  appId: "1:227984089329:web:94a39135b4d44edbd30950",
-  measurementId: "G-SC4ECGKRZR"
-};
-      firebase.initializeApp(firebaseConfig);
-      
-      // Firebase Realtime Database referencia
-      const database = firebase.database();
-    </script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-firestore.js"></script>
 </head>
 <body>
-    <h1>NFC Példa</h1>
-    <button id="readNfc">NFC Olvasása</button>
-    <button id="writeNfc">NFC Írása</button>
-    <p id="nfcData">Az NFC adat itt jelenik meg</p>
+    <h1>NFC Pont Adó Rendszer</h1>
+    <button id="addPoints">Pont Hozzáadása</button>
+    <p id="nfcData">Érintsd meg az NFC kártyát</p>
+    <div id="transactions">
+        <h2>Tranzakciók:</h2>
+        <ul id="transactionList"></ul>
+    </div>
 
     <script>
-        document.getElementById('readNfc').addEventListener('click', async () => {
-            if ('NDEFReader' in window) {
-                const permission = confirm("Engedélyezed az NFC használatát az olvasáshoz?");
-                if (permission) {
-                    try {
-                        const ndef = new NDEFReader();
-                        await ndef.scan();
-                        ndef.onreading = event => {
-                            const decoder = new TextDecoder();
-                            for (const record of event.message.records) {
-                                console.log(`Rekord típusa: ${record.recordType}`);
-                                console.log(`MIME típus: ${record.mediaType}`);
-                                console.log(`Adat: ${decoder.decode(record.data)}`);
-                                const nfcData = decoder.decode(record.data);
-                                document.getElementById('nfcData').textContent = nfcData;
-                                // Adat küldése a Firebase Realtime Database-nek
-                                var adatbazis = firebase.database().ref('nfcData');
-                                adatbazis.push({
-                                idopecset: Date.now(),
-                                data: nfcData
-            });
+        // Firebase configuration
+ const firebaseConfig = {
+  apiKey: "AIzaSyDTvbas3_caFWVc4aMN8C4KbZu7g5r6vfI",
+  authDomain: "kmkadmin-86cf5.firebaseapp.com",
+  databaseURL: "https://kmkadmin-86cf5-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kmkadmin-86cf5",
+  storageBucket: "kmkadmin-86cf5.appspot.com",
+  messagingSenderId: "543581792942",
+  appId: "1:543581792942:web:960836303ece5d5fc09b3f",
+  measurementId: "G-7JST1C8QQN"
+};
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // NFC olvasó beállítása
+        const ndef = new NDEFReader();
+
+        document.getElementById('addPoints').addEventListener('click', async () => {
+            try {
+                await ndef.scan();
+                ndef.onreading = async event => {
+                    const decoder = new TextDecoder();
+                    for (const record of event.message.records) {
+                        const nfcData = decoder.decode(record.data);
+                        const cardSerialNumber = nfcData.trim();
+                        if (cardSerialNumber === "04:6a:ff:34") {
+                            const points = prompt("Hány pontot szeretnél hozzáadni?");
+                            if (points && !isNaN(points)) {
+                                const docRef = await db.collection("transactions").add({
+                                    cardSerialNumber: cardSerialNumber,
+                                    points: parseInt(points),
+                                    timestamp: new Date()
+                                });
+                                document.getElementById('nfcData').textContent = `Hozzáadva ${points} pont. Tranzakció ID: ${docRef.id}`;
+                                loadTransactions();
+                            } else {
+                                alert("Érvényes pontértéket adj meg.");
                             }
-                        };
-                    } catch (error) {
-                        console.error(`Hiba az NFC olvasásakor: ${error}`);
-                        alert(`Hiba az NFC olvasásakor: ${error}`);
+                        } else {
+                            alert("Nem jogosult NFC kártya.");
+                        }
                     }
-                }
-            } else {
-                alert("Az NFC nem támogatott ezen a készüléken vagy böngészőben.");
+                };
+            } catch (error) {
+                console.error(`Hiba: ${error}`);
             }
         });
 
-        document.getElementById('writeNfc').addEventListener('click', async () => {
-            if ('NDEFReader' in window) {
-                const permission = confirm("Engedélyezed az NFC használatát az íráshoz?");
-                if (permission) {
-                    try {
-                        const ndef = new NDEFReader();
-                        await ndef.write("Helló NFC");
-                        console.log("NFC címke írva");
-                        document.getElementById('nfcData').textContent = "NFC címke írva 'Helló NFC' üzenettel";
-                        // Adat küldése a Firebase Realtime Database-nek
-                        database.ref('nfcData').set("Helló NFC");
-                    } catch (error) {
-                        console.error(`Hiba az NFC írásakor: ${error}`);
-                        alert(`Hiba az NFC írásakor: ${error}`);
-                    }
-                }
-            } else {
-                alert("Az NFC nem támogatott ezen a készüléken vagy böngészőben.");
-            }
-        });
+        async function loadTransactions() {
+            const transactionList = document.getElementById('transactionList');
+            transactionList.innerHTML = "";
+            const querySnapshot = await db.collection("transactions").orderBy("timestamp", "desc").get();
+            querySnapshot.forEach(doc => {
+                const transaction = doc.data();
+                const listItem = document.createElement('li');
+                listItem.textContent = `Kártya: ${transaction.cardSerialNumber}, Pontok: ${transaction.points}, Dátum: ${transaction.timestamp.toDate().toLocaleString()}`;
+                transactionList.appendChild(listItem);
+            });
+        }
+
+        loadTransactions();
     </script>
 </body>
 </html>
