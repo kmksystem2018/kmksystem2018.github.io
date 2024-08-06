@@ -1,0 +1,96 @@
+
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <title>Rejtvény</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-database.js"></script>
+</head>
+<body>
+    <h1>Üdvözöllek!</h1>
+    <p>Oldd meg az alábbi rejtvényt a következő kód megtalálásához:</p>
+    <form id="answerForm">
+        <input type="text" id="answer" placeholder="Írd be a választ">
+        <button type="button" onclick="checkAnswer()">Ellenőrizd</button>
+    </form>
+    <p id="result"></p>
+
+    <button type="button" onclick="sendHelp()">Segítség kérése</button>
+
+    <p id="timer"></p>
+
+    <video id="rewardVideo" width="320" height="240" controls style="display:none;">
+        <source src="video.mp4" type="video/mp4">
+        A böngészője nem támogatja a videó lejátszást.
+    </video>
+
+    <script>
+        // Firebase konfiguráció
+const firebaseConfig = {
+  apiKey: "AIzaSyDTvbas3_caFWVc4aMN8C4KbZu7g5r6vfI",
+  authDomain: "kmkadmin-86cf5.firebaseapp.com",
+  databaseURL: "https://kmkadmin-86cf5-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kmkadmin-86cf5",
+  storageBucket: "kmkadmin-86cf5.appspot.com",
+  messagingSenderId: "543581792942",
+  appId: "1:543581792942:web:960836303ece5d5fc09b3f",
+  measurementId: "G-7JST1C8QQN"
+};
+   // Firebase inicializálása
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Visszaszámláló
+        let timer;
+        let timeLeft = 600; // 10 perc visszaszámláló
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").innerHTML = `Hátralévő idő: ${Math.floor(timeLeft / 60)} perc ${timeLeft % 60} másodperc`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    document.getElementById("timer").innerHTML = "Lejárt az idő!";
+                }
+            }, 1000);
+        }
+
+        // Firebase valós idejű figyelése a visszaszámlálás indításához
+        firebase.database().ref("countdown/start").on("value", function(snapshot) {
+            if (snapshot.val() === true) {
+                startTimer();
+                firebase.database().ref("countdown/start").set(false);
+            }
+        });
+
+        // Válasz ellenőrzése
+        function checkAnswer() {
+            var answer = document.getElementById("answer").value.toLowerCase();
+            var result = document.getElementById("result");
+            if (answer === "társasjáték") {
+                clearInterval(timer);
+                result.innerHTML = "Helyes válasz!";
+                document.getElementById("rewardVideo").style.display = "block";
+                document.getElementById("rewardVideo").play();
+            } else {
+                result.innerHTML = "Helytelen válasz, próbáld újra.";
+            }
+        }
+
+        // Segítség kérése
+        function sendHelp() {
+            firebase.database().ref("help_requests").push({
+                message: "Segítségre van szükség a szabadulószobában!",
+                timestamp: Date.now()
+            }).then(() => {
+                alert("Segítségkérés elküldve!");
+            }).catch((error) => {
+                alert("Hiba történt a segítségkérés küldésekor: " + error.message);
+            });
+        }
+
+    </script>
+</body>
+</html>
