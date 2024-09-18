@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alkalmazotti Bejelentkezés</title>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Bejelentkezés</h1>
+
+        <!-- Bejelentkezési űrlap -->
+        <div id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Alkalmazott email címe">
+            </div>
+
+            <button onclick="login()">Bejelentkezés</button>
+        </div>
+
+        <!-- Felhasználói adatok megjelenítése -->
+        <div id="userData" style="display: none;">
+            <h2 id="userName"></h2>
+            <canvas id="barcode"></canvas>
+            <button onclick="logout()">Kijelentkezés</button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase inicializálás
+const firebaseConfig = {
+  apiKey: "AIzaSyDTvbas3_caFWVc4aMN8C4KbZu7g5r6vfI",
+  authDomain: "kmkadmin-86cf5.firebaseapp.com",
+  databaseURL: "https://kmkadmin-86cf5-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kmkadmin-86cf5",
+  storageBucket: "kmkadmin-86cf5.appspot.com",
+  messagingSenderId: "543581792942",
+  appId: "1:543581792942:web:960836303ece5d5fc09b3f",
+  measurementId: "G-7JST1C8QQN"
+};
+    const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+
+function login() {
+    const email = document.getElementById("email").value;
+
+    // Lekérjük az alkalmazottat az email alapján
+    db.collection("employees").where("email", "==", email)
+        .get()
+        .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+                querySnapshot.forEach((doc) => {
+                    const userData = doc.data();
+                    const userId = doc.id; // user ID megszerzése
+                    displayUserData(userData, userId); // Felhasználói adatok megjelenítése
+                });
+            } else {
+                alert("Nincs ilyen email címmel rendelkező alkalmazott.");
+            }
+        })
+        .catch((error) => {
+            console.error("Hiba történt az adatok betöltésekor: ", error);
+        });
+}
+
+// Felhasználói adatok megjelenítése
+function displayUserData(userData, userId) {
+    document.getElementById("userName").textContent = userData.name;
+    JsBarcode("#barcode", userId, {  // Vonalkód generálása a user ID alapján
+        format: "CODE128",
+        displayValue: true
+    });
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("userData").style.display = "block";
+}
+
+// Kijelentkezés
+function logout() {
+    document.getElementById("loginForm").style.display = "block";
+    document.getElementById("userData").style.display = "none";
+}
+  </script>
+</body>
+</html>
