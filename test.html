@@ -26,8 +26,7 @@
             font-size: 3em;
         }
 
-       
-.quiz-box, .modal {
+        .quiz-box, .modal {
             display: none;
         }
 
@@ -105,9 +104,7 @@
 <body>
 
     <!-- jsQR könyvtár betöltése -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsqr.min.js"></script>
-
-
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <div class="container">
         <h1>Mezőkövesd Történelmi Kvíz</h1>
@@ -138,7 +135,7 @@
             <!-- QR-kód feladat -->
             <div id="qr-task" class="qr-task">
                 <p>Kérlek, olvasd be a helyes QR-kódot a továbblépéshez!</p>
-                <video id="qr-reader" width="300"></video>
+                <div id="qr-reader" style="width: 300px;"></div>
                 <p id="qr-result"></p>
             </div>
         </div>
@@ -172,10 +169,7 @@
 
         let currentTask = 0;
         let score = 0;
-        let userUID = null;
-        let videoStream;
 
-        
         // Teljes képernyős mód
         document.getElementById('start-btn').addEventListener('click', () => {
             document.getElementById('start-screen').style.display = 'none';
@@ -213,7 +207,6 @@
             const task = tasks[currentTask];
             const isCorrect = selected === task.correct;
 
-           
             document.getElementById('modal-text').innerText = isCorrect ? 'Helyes válasz! ' + task.info : 'Rossz válasz! ' + task.info;
             document.getElementById('modal').style.display = 'block';
         }
@@ -241,42 +234,32 @@
             startQRCodeReader();
         }
 
-       const canvas = document.createElement('canvas');
-const context = canvas.getContext('2d');
+        function startQRCodeReader() {
+            const qrReader = new Html5Qrcode("qr-reader");
 
-function startQRCodeReader() {
-    const videoElement = document.getElementById('qr-reader');
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then((stream) => {
-            videoElement.srcObject = stream;
-            videoElement.setAttribute("playsinline", true);
-            videoElement.play();
-            requestAnimationFrame(scanQRCode);
-        })
-        .catch((err) => {
-            console.error(err);
-        });
-}
-
-function scanQRCode() {
-    canvas.width = videoElement.videoWidth;
-    canvas.height = videoElement.videoHeight;
-    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, canvas.width, canvas.height);
-
-    if (code) {
-        const task = tasks[currentTask];
-        if (code.data === task.qrCode) {
-            document.getElementById('qr-result').innerText = 'Helyes QR-kód!';
-            nextTask();
-        } else {
-            document.getElementById('qr-result').innerText = 'Helytelen QR-kód. Próbáld újra!';
+            qrReader.start(
+                { facingMode: "environment" }, // Környezetkamera használata
+                {
+                    fps: 10,    // A képkockasebesség másodpercenként
+                    qrbox: 250  // A QR-kód olvasási területe (négyzetes doboz mérete)
+                },
+                (decodedText, decodedResult) => {
+                    const task = tasks[currentTask];
+                    if (decodedText === task.qrCode) {
+                        document.getElementById('qr-result').innerText = 'Helyes QR-kód!';
+                        qrReader.stop();
+                        nextTask();
+                    } else {
+                        document.getElementById('qr-result').innerText = 'Helytelen QR-kód. Próbáld újra!';
+                    }
+                },
+                (errorMessage) => {
+                    console.log(`QR-kód olvasási hiba: ${errorMessage}`);
+                })
+                .catch((err) => {
+                    console.error(`QR-kód olvasási hiba: ${err}`);
+                });
         }
-    }
-    
-    requestAnimationFrame(scanQRCode);
-}
 
         function nextTask() {
             currentTask++;
