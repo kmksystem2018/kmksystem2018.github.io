@@ -241,41 +241,42 @@
             startQRCodeReader();
         }
 
-        function startQRCodeReader() {
-            videoStream = document.getElementById('qr-reader');
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                .then((stream) => {
-                    videoStream.srcObject = stream;
-                    videoStream.setAttribute("playsinline", true); // Required to tell iOS Safari we don't want fullscreen
-                    videoStream.play();
-                    requestAnimationFrame(scanQRCode);
-                })
-                .catch((err) => {
-                    console.error(err);
-                });
-        }
+       const canvas = document.createElement('canvas');
+const context = canvas.getContext('2d');
 
-        function scanQRCode() {
-            const canvas = document.createElement('canvas');
-            canvas.width = videoStream.videoWidth;
-            canvas.height = videoStream.videoHeight;
-            const context = canvas.getContext('2d');
-            context.drawImage(videoStream, 0, 0, canvas.width, canvas.height);
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, canvas.width, canvas.height);
-            
-            if (code) {
-                const task = tasks[currentTask];
-                if (code.data === task.qrCode) {
-                    document.getElementById('qr-result').innerText = 'Helyes QR-kód!';
-                    nextTask();
-                } else {
-                    document.getElementById('qr-result').innerText = 'Helytelen QR-kód. Próbáld újra!';
-                }
-            }
-
+function startQRCodeReader() {
+    const videoElement = document.getElementById('qr-reader');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then((stream) => {
+            videoElement.srcObject = stream;
+            videoElement.setAttribute("playsinline", true);
+            videoElement.play();
             requestAnimationFrame(scanQRCode);
+        })
+        .catch((err) => {
+            console.error(err);
+        });
+}
+
+function scanQRCode() {
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+    if (code) {
+        const task = tasks[currentTask];
+        if (code.data === task.qrCode) {
+            document.getElementById('qr-result').innerText = 'Helyes QR-kód!';
+            nextTask();
+        } else {
+            document.getElementById('qr-result').innerText = 'Helytelen QR-kód. Próbáld újra!';
         }
+    }
+    
+    requestAnimationFrame(scanQRCode);
+}
 
         function nextTask() {
             currentTask++;
