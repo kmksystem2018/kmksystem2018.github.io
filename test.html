@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mezőkövesd Történelmi Kvíz</title>
+    <style>
+        /* Alap stílusok és animációk */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ffcc00;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        .container {
+            width: 90%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #cc0000;
+            font-size: 3em;
+        }
+
+       
+.quiz-box, .modal {
+            display: none;
+        }
+
+        .quiz-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            margin-top: 30px;
+        }
+
+        .question {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #cc0000;
+        }
+
+        .options button {
+            background-color: #cc0000;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .options button:hover {
+            background-color: #ff9900;
+        }
+
+        .score {
+            font-size: 1.3em;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .info-box, .qr-task {
+            display: none;
+        }
+
+        /* Modal felugró ablak stílus */
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal p {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .modal button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #cc0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #qr-reader {
+            width: 300px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- jsQR könyvtár betöltése -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsqr.min.js"></script>
+
+
+
+    <div class="container">
+        <h1>Mezőkövesd Történelmi Kvíz</h1>
+
+        <!-- Kezdőképernyő -->
+        <div id="start-screen" class="start-screen">
+            <h2>Üdvözlünk a Mezőkövesd Történelmi Kvízben!</h2>
+            <button id="start-btn">Kezdés</button>
+        </div>
+
+        <!-- Kvíz doboz -->
+        <div id="quiz-box" class="quiz-box">
+            <p id="question" class="question"></p>
+            <div id="quiz-options" class="options">
+                <button onclick="checkAnswer(0)">Válasz 1</button>
+                <button onclick="checkAnswer(1)">Válasz 2</button>
+                <button onclick="checkAnswer(2)">Válasz 3</button>
+                <button onclick="checkAnswer(3)">Válasz 4</button>
+            </div>
+            <p id="score" class="score">Pontszám: 0</p>
+
+            <!-- Ismertető szöveg -->
+            <div id="info-box" class="info-box">
+                <p id="info-text"></p>
+                <button onclick="nextTask()">Tovább</button>
+            </div>
+
+            <!-- QR-kód feladat -->
+            <div id="qr-task" class="qr-task">
+                <p>Kérlek, olvasd be a helyes QR-kódot a továbblépéshez!</p>
+                <video id="qr-reader" width="300"></video>
+                <p id="qr-result"></p>
+            </div>
+        </div>
+
+        <!-- Modal (Felugró ablak) -->
+        <div id="modal" class="modal">
+            <p id="modal-text"></p>
+            <button onclick="closeModal()">Tovább</button>
+        </div>
+    </div>
+
+    <script>
+        const tasks = [
+            {
+                type: 'quiz',
+                question: 'Mikor alapították Mezőkövesd városát?',
+                options: ['1095', '1234', '1320', '1456'],
+                correct: 2,
+                info: 'Mezőkövesd 1320-ban nyerte el városi rangját.'
+            },
+            {
+                type: 'info',
+                text: 'Mezőkövesd híres a Zsóry Gyógyfürdőről, amely gyógyvize reumatikus betegségek kezelésére alkalmas.'
+            },
+            {
+                type: 'qr',
+                qrCode: 'https://pontvadaszat.hu?m_mezo&t=QQ24R5',
+                info: 'A következő feladat csak akkor folytatható, ha a helyes QR-kódot olvasod be.'
+            }
+        ];
+
+        let currentTask = 0;
+        let score = 0;
+        let userUID = null;
+        let videoStream;
+
+        
+        // Teljes képernyős mód
+        document.getElementById('start-btn').addEventListener('click', () => {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('quiz-box').style.display = 'block';
+            document.documentElement.requestFullscreen();
+            loadTask();
+        });
+
+        // Feladat betöltése
+        function loadTask() {
+            const task = tasks[currentTask];
+            if (task.type === 'quiz') {
+                loadQuestion();
+            } else if (task.type === 'info') {
+                loadInfo();
+            } else if (task.type === 'qr') {
+                loadQRTask();
+            }
+        }
+
+        function loadQuestion() {
+            const task = tasks[currentTask];
+            document.getElementById('question').style.display = 'block';
+            document.getElementById('quiz-options').style.display = 'block';
+            document.getElementById('info-box').style.display = 'none';
+            document.getElementById('qr-task').style.display = 'none';
+            document.getElementById('question').innerText = task.question;
+            const buttons = document.querySelectorAll('.options button');
+            buttons.forEach((button, index) => {
+                button.innerText = task.options[index];
+            });
+        }
+
+        function checkAnswer(selected) {
+            const task = tasks[currentTask];
+            const isCorrect = selected === task.correct;
+
+           
+            document.getElementById('modal-text').innerText = isCorrect ? 'Helyes válasz! ' + task.info : 'Rossz válasz! ' + task.info;
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            nextTask();
+        }
+
+        function loadInfo() {
+            const task = tasks[currentTask];
+            document.getElementById('question').style.display = 'none';
+            document.getElementById('quiz-options').style.display = 'none';
+            document.getElementById('info-box').style.display = 'block';
+            document.getElementById('qr-task').style.display = 'none';
+            document.getElementById('info-text').innerText = task.text;
+        }
+
+        function loadQRTask() {
+            document.getElementById('question').style.display = 'none';
+            document.getElementById('quiz-options').style.display = 'none';
+            document.getElementById('info-box').style.display = 'none';
+            document.getElementById('qr-task').style.display = 'block';
+
+            startQRCodeReader();
+        }
+
+        function startQRCodeReader() {
+            videoStream = document.getElementById('qr-reader');
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then((stream) => {
+                    videoStream.srcObject = stream;
+                    videoStream.setAttribute("playsinline", true); // Required to tell iOS Safari we don't want fullscreen
+                    videoStream.play();
+                    requestAnimationFrame(scanQRCode);
+                })
+                .catch((err) => {
+                    console.error(err);
+                });
+        }
+
+        function scanQRCode() {
+            const canvas = document.createElement('canvas');
+            canvas.width = videoStream.videoWidth;
+            canvas.height = videoStream.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(videoStream, 0, 0, canvas.width, canvas.height);
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height);
+            
+            if (code) {
+                const task = tasks[currentTask];
+                if (code.data === task.qrCode) {
+                    document.getElementById('qr-result').innerText = 'Helyes QR-kód!';
+                    nextTask();
+                } else {
+                    document.getElementById('qr-result').innerText = 'Helytelen QR-kód. Próbáld újra!';
+                }
+            }
+
+            requestAnimationFrame(scanQRCode);
+        }
+
+        function nextTask() {
+            currentTask++;
+            if (currentTask < tasks.length) {
+                loadTask();
+            } else {
+                document.getElementById('question').innerText = 'Vége a játéknak! A pontszámod: ' + score;
+                document.querySelector('.options').style.display = 'none';
+            }
+        }
+    </script>
+
+</body>
+</html>
