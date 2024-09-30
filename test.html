@@ -254,6 +254,7 @@
                         qrReader.stop();
                         nextTask();
                     } else {
+                        alert(decodedText)
                         document.getElementById('qr-result').innerText = 'Helytelen QR-kód. Próbáld újra!';
                     }
                 },
