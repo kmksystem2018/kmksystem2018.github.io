@@ -84,8 +84,8 @@
             font-size: 1.2em;
             color: #333;
         }
-
-        .modal button {
+	
+        button {
             margin-top: 10px;
             padding: 10px 20px;
             background-color: #cc0000;
@@ -107,11 +107,11 @@
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <div class="container">
-        <h1>Mezőkövesd Történelmi Kvíz</h1>
+        <h1>Kövesdi BarangoLÓ</h1>
 
         <!-- Kezdőképernyő -->
         <div id="start-screen" class="start-screen">
-            <h2>Üdvözlünk a Mezőkövesd Történelmi Kvízben!</h2>
+            <h2>Fedezd fel Mezőkövesdet!</h2>
             <button id="start-btn">Kezdés</button>
         </div>
 
@@ -124,12 +124,12 @@
                 <button onclick="checkAnswer(2)">Válasz 3</button>
                 <button onclick="checkAnswer(3)">Válasz 4</button>
             </div>
-            <p id="score" class="score">Pontszám: 0</p>
+
 
             <!-- Ismertető szöveg -->
             <div id="info-box" class="info-box">
                 <p id="info-text"></p>
-                <button onclick="nextTask()">Tovább</button>
+                <button class="button" onclick="nextTask()">Tovább</button>
             </div>
 
             <!-- QR-kód feladat -->
@@ -150,20 +150,40 @@
     <script>
         const tasks = [
             {
-                type: 'quiz',
-                question: 'Mikor alapították Mezőkövesd városát?',
-                options: ['1095', '1234', '1320', '1456'],
-                correct: 2,
-                info: 'Mezőkövesd 1320-ban nyerte el városi rangját.'
+                type: 'info',
+                text: 'Üdvözöllek Mezőkövesden!'
             },
             {
                 type: 'info',
-                text: 'Mezőkövesd híres a Zsóry Gyógyfürdőről, amely gyógyvize reumatikus betegségek kezelésére alkalmas.'
+                text: 'Ebben a játékban különböző helyszínekhez kapcsolódó kérdésekre kell válaszolnod és helyenként QR-kódokat leolvasni annak biztosítása érdekében, haogy valóban ott vagy-e.'
+            },
+            {
+                type: 'info',
+                text: 'A kiindulási helyszín az SZTK és a Új Rendezvényközpont közötti parkoló (google térkép segítségével megtalálható) és ide is érkezünk vissza egy 1.5-2 órás séta után.'
+            },
+            {
+                type: 'info',
+                text: 'Most csak akkor kattints a tovább gombra, ha a parkolóban vagy.'
+            },
+            {
+                type: 'info',
+                text: 'Oké. Induljunk el a parkolóból  a fő útra nézve jobbra. Itt azonnal szemet szúr egy szobor. Most egy egyszerű kvízkérédés fog következni.'
+            },
+            {
+                type: 'quiz',
+                question: 'Milyen anyagból készült a szobor?',
+                options: ['vas', 'fa', 'kő', 'üveg'],
+                correct: 2,
+                info: 'A matyó hímzés kétszáz éves múltra tekint vissza. Ezt a hagyományt idézi meg a Matyó menyecske szobra, erősítve a hagyomány fenntartásának szándékát. A szobor egy széken ülő, jellegzetes matyóföldi népviseletbe öltözött asszonyt ábrázol, kezében hímzést tartva.'
+            },
+            {
+                type: 'info',
+                text: 'Ez könnyű volt, ellenőrizzun helyben vagy-e.'
             },
             {
                 type: 'qr',
-                qrCode: 'URL:https://pontvadaszat.hu?m=mezo&t=QQ24R5',
-                info: 'A következő feladat csak akkor folytatható, ha a helyes QR-kódot olvasod be.'
+                qrCode: 'https://pontvadaszat.hu?m=mezo&t=JKIOLP',
+                info: 'A következő feladat csak akkor folytatható, ha helyes QR-kódot olvasol be. A kód a szobor hátulján, a talpazat jobb oldalán található. Megeshet, hogy a QR kód olvasó mező nem jelenik meg azonnal, ebben az esetben várj pár másodpercet.'
             },
             {
                 type: 'info',
@@ -254,7 +274,6 @@
                         qrReader.stop();
                         nextTask();
                     } else {
-                        alert(decodedText);
                         document.getElementById('qr-result').innerText = 'Helytelen QR-kód. Próbáld újra!';
                     }
                 },
