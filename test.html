@@ -134,7 +134,7 @@
 
             <!-- QR-kód feladat -->
             <div id="qr-task" class="qr-task">
-                <p>Kérlek, olvasd be a helyes QR-kódot a továbblépéshez!</p>
+                <p id="qrtask">Kérlek, olvasd be a helyes QR-kódot a továbblépéshez!</p>
                 <div id="qr-reader" style="width: 300px;"></div>
                 <p id="qr-result"></p>
             </div>
@@ -182,7 +182,7 @@
             },
             {
                 type: 'qr',
-                qrCode: 'https://pontvadaszat.hu?m=mezo&t=JKIOLP',
+                qrCode: 'URL:https://pontvadaszat.hu?m=mezo&t=JKIOLP',
                 info: 'A következő feladat csak akkor folytatható, ha helyes QR-kódot olvasol be. A kód a szobor hátulján, a talpazat jobb oldalán található. Megeshet, hogy a QR kód olvasó mező nem jelenik meg azonnal, ebben az esetben várj pár másodpercet.'
             },
             {
@@ -250,10 +250,12 @@
         }
 
         function loadQRTask() {
+		            const info = tasks[currentTask];
             document.getElementById('question').style.display = 'none';
             document.getElementById('quiz-options').style.display = 'none';
             document.getElementById('info-box').style.display = 'none';
             document.getElementById('qr-task').style.display = 'block';
+	    document.getElementById('qrtask').innerText = task.info;
 
             startQRCodeReader();
         }
