@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="hu">
 <head>
@@ -151,11 +152,11 @@
         const tasks = [
             {
                 type: 'info',
-                text: 'Üdvözöllek Mezőkövesden!'
+                text: 'Üdvözöllek Mezőkövesden! Ha hibákat észleltek, akkor kérjük a bejelentkezési oldalon, vagy a játék főoldalán lévő, a jobb alsó sarokban elhelyezkedő kék kérdőjelre kattintsatok. '
             },
             {
                 type: 'info',
-                text: 'Ebben a játékban különböző helyszínekhez kapcsolódó kérdésekre kell válaszolnod és helyenként QR-kódokat leolvasni annak biztosítása érdekében, haogy valóban ott vagy-e.'
+                text: 'Ebben a játékban különböző helyszínekhez kapcsolódó kérdésekre kell válaszolnotok és helyenként QR-kódokat leolvasni annak biztosítása érdekében, haogy valóban ott vagytok-e.'
             },
             {
                 type: 'info',
@@ -163,11 +164,11 @@
             },
             {
                 type: 'info',
-                text: 'Most csak akkor kattints a tovább gombra, ha a parkolóban vagy.'
+                text: 'Most csak akkor kattintsatok a tovább gombra, ha a parkolóban vagytok.'
             },
             {
                 type: 'info',
-                text: 'Oké. Induljunk el a parkolóból  a fő útra nézve jobbra. Itt azonnal szemet szúr egy szobor. Most egy egyszerű kvízkérédés fog következni.'
+                text: 'Oké. Induljunk el a parkolóból a fő útra nézve jobbra. Itt azonnal szemet szúr egy szobor. Most egy egyszerű kvízkérédés fog következni.'
             },
             {
                 type: 'quiz',
@@ -178,17 +179,41 @@
             },
             {
                 type: 'info',
-                text: 'Ez könnyű volt, ellenőrizzun helyben vagy-e.'
+                text: 'Ez könnyű volt, ellenőrizzun helyben vagytok-e.'
             },
             {
                 type: 'qr',
                 qrCode: 'URL:https://pontvadaszat.hu?m=mezo&t=JKIOLP',
-                info: 'A következő feladat csak akkor folytatható, ha helyes QR-kódot olvasol be. A kód a szobor hátulján, a talpazat jobb oldalán található. Megeshet, hogy a QR kód olvasó mező nem jelenik meg azonnal, ebben az esetben várj pár másodpercet.'
+                info: 'A következő feladat csak akkor folytatható, ha helyes QR kódot olvastok be. A kód a szobor hátulján, a talpazat jobb oldalán található. Megeshet, hogy a QR kód olvasó mező nem jelenik meg azonnal, ebben az esetben várjatok pár másodpercet.'
             },
             {
                 type: 'info',
-                text: 'JUPIIIIIIIIIIIIIIIIIIII'
-            }
+                text: 'Szuper! Az úton több helyen találkozhattok ilyen QR kódokkal, de csak azokat kell leolvasni amelyeket kéri a rendszer.'
+            },
+            {
+                type: 'info',
+                text: 'Most egy kicsit hosszabb séta következik.'
+            },
+            {
+                type: 'info',
+                text: 'Induljatok tovább a közeli körforgalom irányába. Nagyjából 600 méter, azaz kb. 10 perc séta után a jobb oldalon meg fogjátok pillantani a város fő terét. Ha látjátok a főteret kattintsatok a Tovább gomra.'
+            },
+            {
+                type: 'info',
+                text: 'A főtér szélén a coop abc-vel szemben egy emlékművet találtok. Járjátok alaposan körbe, majd kattintsatok a Tovább gomra. '
+            },
+            {
+                type: 'qr',
+                qrCode: 'URL:https://pontvadaszat.hu?m=mezo&t=7Z6TGF',
+                info: 'Keressétek meg a QR kódot az emlékművön.'
+            },
+            {
+                type: 'quiz',
+                question: 'Bizonyára felismertétek, hogy az emlékmű az 1848-49-es eseményeknek állít emléket, de vajon hanyadik évfordulóra készült?',
+                options: ['50', '100', '150', '175'],
+                correct: 1,
+                info: 'És a tér fái között szépen terebélyesedik az a platánfa is, amit az orosz csapatok végleges kivonulásakor ültettek.'
+           },
         ];
 
         let currentTask = 0;
