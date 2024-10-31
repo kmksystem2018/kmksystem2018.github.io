@@ -2,11 +2,11 @@
 <html lang="hu">
 <head>
   <meta charset="UTF-8">
-  <title>Bejelentkezés Ellenőrzés</title>
+  <title>NFC Ellenőrzés</title>
   <script type="module">
     // Firebase SDK 9 importálása
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.8/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.8/firebase-database.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.8/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDTvbas3_caFWVc4aMN8C4KbZu7g5r6vfI",
@@ -22,27 +22,35 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Ellenőrizzük, hogy az NFC beolvasás sikeres volt-e
-    window.checkNFC = async function() {
+    // Automatikusan elindítjuk az NFC beolvasást a weboldal betöltésekor
+    window.onload = async function() {
+      const ndef = new NDEFReader();
+
       try {
-        const ndef = new NDEFReader();
         await ndef.scan();
+        console.log("> Scan started");
+
         ndef.addEventListener("reading", async ({ serialNumber }) => {
           const allowedSerial = "04:6a:ff:34"; // Az elvárt NFC sorozatszám
           const loginStatusRef = ref(db, 'loginStatus');
 
           if (serialNumber === allowedSerial) {
             await set(loginStatusRef, "success");
-            alert("Sikeres NFC beolvasás!");
+            console.log("Sikeres NFC beolvasás!");
 
             // Bejelentkezés után visszaállítjuk a státuszt
             await set(loginStatusRef, "not logged in"); // Visszaállítás
             document.getElementById("message").textContent = "Bejelentkezés sikeresen befejeződött!";
           } else {
             await set(loginStatusRef, "failed");
-            alert("Sikertelen NFC beolvasás!");
+            console.log("Sikertelen NFC beolvasás!");
           }
         });
+
+        ndef.addEventListener("readingerror", () => {
+          console.error("Argh! Cannot read data from the NFC tag. Try another one?");
+        });
+
       } catch (error) {
         console.error("NFC hiba: ", error);
       }
@@ -51,7 +59,6 @@
 </head>
 <body>
   <h1>NFC Ellenőrzés</h1>
-  <button onclick="checkNFC()">NFC Beolvasása</button>
   <p id="message"></p> <!-- Üzenet megjelenítésére szolgáló elem -->
 </body>
 </html>
