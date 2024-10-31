@@ -4,33 +4,30 @@
   <meta charset="UTF-8">
   <title>NFC Ellenőrzés</title>
   <script type="module">
-    // Firebase konfiguráció
- 
     // Firebase SDK 9 importálása
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.8/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.8/firebase-database.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.8/firebase-database.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDTvbas3_caFWVc4aMN8C4KbZu7g5r6vfI",
-  authDomain: "kmkadmin-86cf5.firebaseapp.com",
-  databaseURL: "https://kmkadmin-86cf5-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "kmkadmin-86cf5",
-  storageBucket: "kmkadmin-86cf5.appspot.com",
-  messagingSenderId: "543581792942",
-  appId: "1:543581792942:web:960836303ece5d5fc09b3f",
-  measurementId: "G-7JST1C8QQN"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTvbas3_caFWVc4aMN8C4KbZu7g5r6vfI",
+      authDomain: "kmkadmin-86cf5.firebaseapp.com",
+      databaseURL: "https://kmkadmin-86cf5-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "kmkadmin-86cf5",
+      storageBucket: "kmkadmin-86cf5.appspot.com",
+      messagingSenderId: "543581792942",
+      appId: "1:543581792942:web:960836303ece5d5fc09b3f",
+      measurementId: "G-7JST1C8QQN"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
     async function checkNFC() {
-      const ndef = new NDEFReader();
-
       try {
+        const ndef = new NDEFReader();
         await ndef.scan();
         ndef.addEventListener("reading", async ({ serialNumber }) => {
-          const allowedSerial = "04:6a:ff:34"; // Cserélje ki az elvárt NFC sorozatszámra
+          const allowedSerial = "04:6a:ff:34"; // Az elvárt NFC sorozatszám
           const loginStatusRef = ref(db, 'loginStatus');
 
           if (serialNumber === allowedSerial) {
