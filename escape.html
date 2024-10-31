@@ -5,8 +5,10 @@
   <title>NFC Ellenőrzés</title>
   <script type="module">
     // Firebase konfiguráció
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/7.14.0/firebase-app.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/7.14.0/firebase-database.js";
+ 
+    // Firebase SDK 9 importálása
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.8/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.8/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDTvbas3_caFWVc4aMN8C4KbZu7g5r6vfI",
