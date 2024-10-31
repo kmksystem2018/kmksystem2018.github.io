@@ -44,6 +44,8 @@
           } else {
             await set(loginStatusRef, "failed");
             console.log("Sikertelen NFC beolvasás!");
+await set(loginStatusRef, "not logged in"); // Visszaállítás
+            document.getElementById("message").textContent = "Bejelentkezés sikertelenül befejeződött!";
           }
         });
 
