@@ -44,7 +44,7 @@
           if (serialNumber === allowedSerial) {
             await set(loginStatusRef, "success");
             console.log("Sikeres NFC beolvasás!");
-            changeBackgroundColor("green");
+            changeBackgroundColor("blue");
             document.getElementById("message").textContent = "Bejelentkezés sikeresen befejeződött!";
           } else {
             await set(loginStatusRef, "failed");
