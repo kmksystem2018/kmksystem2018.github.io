@@ -33,21 +33,28 @@
         ndef.addEventListener("reading", async ({ serialNumber }) => {
           const allowedSerial = "04:6a:ff:34"; // Az elvárt NFC sorozatszám
           const loginStatusRef = ref(db, 'loginStatus');
+          
+          const changeBackgroundColor = (color) => {
+            document.body.style.backgroundColor = color;
+            setTimeout(() => {
+              document.body.style.backgroundColor = ""; // Eredeti háttérszín visszaállítása
+            }, 2000); // 2 másodperc
+          };
 
           if (serialNumber === allowedSerial) {
             await set(loginStatusRef, "success");
             console.log("Sikeres NFC beolvasás!");
-
-            // Bejelentkezés után visszaállítjuk a státuszt
-            await set(loginStatusRef, "not logged in"); // Visszaállítás
+            changeBackgroundColor("green");
             document.getElementById("message").textContent = "Bejelentkezés sikeresen befejeződött!";
           } else {
             await set(loginStatusRef, "failed");
             console.log("Sikertelen NFC beolvasás!");
-
-              await set(loginStatusRef, "not logged in"); // Visszaállítás
-            document.getElementById("message").textContent = "Bejelentkezés sikeresen befejeződött!";
+            changeBackgroundColor("red");
+            document.getElementById("message").textContent = "Bejelentkezés sikertelen!";
           }
+
+          // Bejelentkezés után visszaállítjuk a státuszt
+          await set(loginStatusRef, "not logged in");
         });
 
         ndef.addEventListener("readingerror", () => {
