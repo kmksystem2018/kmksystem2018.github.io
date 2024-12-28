@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bankjegy Felismerő - Kamera és Fotótár</title>
+    <title>Bankjegy Felismerő OpenCV.js-sel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -46,6 +46,7 @@
     <input type="file" id="imageInput" accept="image/png, image/jpeg">
     <canvas id="canvas" style="display: none;"></canvas>
     <div id="result">Eredmény itt jelenik meg.</div>
+    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
     <script>
         const startCameraButton = document.getElementById('startCamera');
         const captureImageButton = document.getElementById('captureImage');
@@ -54,15 +55,6 @@
         const canvas = document.getElementById('canvas');
         const resultDiv = document.getElementById('result');
         const context = canvas.getContext('2d');
-
-        // Referencia képek
-        const banknotes = [
-            { name: '1000 Ft', src: 'https://kmksystem2018.github.io/1000Ft.png' },
-            { name: '2000 Ft', src: 'https://kmksystem2018.github.io/2000Ft.png' },
-            { name: '5000 Ft', src: 'https://kmksystem2018.github.io/5000Ft.png' },
-            { name: '10000 Ft', src: 'https://kmksystem2018.github.io/10000Ft.png' },
-            { name: '20000 Ft', src: 'https://kmksystem2018.github.io/20000Ft.png' }
-        ];
 
         // Kamera elindítása
         startCameraButton.addEventListener('click', async () => {
@@ -76,7 +68,7 @@
             }
         });
 
-        // Kép rögzítése a kameráról
+        // Kép rögzítése
         captureImageButton.addEventListener('click', () => {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -84,7 +76,7 @@
             processImage();
         });
 
-        // Kép feltöltése fotótárból
+        // Kép feltöltése
         imageInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
@@ -103,49 +95,44 @@
             }
         });
 
-        // Kép feldolgozása
+        // Kép feldolgozása OpenCV.js segítségével
         function processImage() {
-            const uploadedData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const src = cv.imread(canvas);
+            const gray = new cv.Mat();
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+            // Referencia képeket hasonlítunk össze
+            const banknotes = [
+ { name: '1000 Ft', src: 'https://kmksystem2018.github.io/1000Ft.png' },
+            { name: '2000 Ft', src: 'https://kmksystem2018.github.io/2000Ft.png' },
+            { name: '5000 Ft', src: 'https://kmksystem2018.github.io/5000Ft.png' },
+            { name: '10000 Ft', src: 'https://kmksystem2018.github.io/10000Ft.png' },
+            { name: '20000 Ft', src: 'https://kmksystem2018.github.io/20000Ft.png' }
+            ];
+
             let bestMatch = { name: null, score: Infinity };
-
-            // Minden referencia képet ellenőrzünk
-            let processed = 0;
             banknotes.forEach((banknote) => {
-                const referenceImg = new Image();
-                referenceImg.onload = () => {
-                    const refCanvas = document.createElement('canvas');
-                    const refContext = refCanvas.getContext('2d');
-                    refCanvas.width = canvas.width;
-                    refCanvas.height = canvas.height;
+                const refImg = cv.imread(banknote.src);
+                const refGray = new cv.Mat();
+                cv.cvtColor(refImg, refGray, cv.COLOR_RGBA2GRAY, 0);
 
-                    refContext.drawImage(referenceImg, 0, 0, refCanvas.width, refCanvas.height);
-                    const referenceData = refContext.getImageData(0, 0, refCanvas.width, refCanvas.height);
+                const diff = new cv.Mat();
+                cv.absdiff(gray, refGray, diff);
+                const score = cv.norm(diff, cv.NORM_L2);
 
-                    // Pixelkülönbség számítása
-                    const diff = calculateDifference(uploadedData.data, referenceData.data);
-                    if (diff < bestMatch.score) {
-                        bestMatch = { name: banknote.name, score: diff };
-                    }
+                if (score < bestMatch.score) {
+                    bestMatch = { name: banknote.name, score };
+                }
 
-                    processed++;
-                    if (processed === banknotes.length) {
-                        resultDiv.textContent = `Felismerés: ${bestMatch.name} (különbség: ${bestMatch.score.toFixed(2)})`;
-                    }
-                };
-                referenceImg.src = banknote.src;
+                refImg.delete();
+                refGray.delete();
+                diff.delete();
             });
-        }
 
-        // Pixelkülönbség kiszámítása
-        function calculateDifference(data1, data2) {
-            let sum = 0;
-            for (let i = 0; i < data1.length; i += 4) {
-                const rDiff = data1[i] - data2[i];
-                const gDiff = data1[i + 1] - data2[i + 1];
-                const bDiff = data1[i + 2] - data2[i + 2];
-                sum += rDiff * rDiff + gDiff * gDiff + bDiff * bDiff;
-            }
-            return Math.sqrt(sum / (data1.length / 4));
+            gray.delete();
+            src.delete();
+
+            resultDiv.textContent = `Felismerés: ${bestMatch.name}, pontszám: ${bestMatch.score}`;
         }
     </script>
 </body>
