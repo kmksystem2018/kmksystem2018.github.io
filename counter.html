@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bankjegy Felismerő - Kamera és Fotótár</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            color: #333;
+            padding: 20px;
+        }
+        video, canvas {
+            max-width: 100%;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        button, input[type="file"] {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bankjegy Felismerő</h1>
+    <p>Használj kamerát vagy tölts fel egy képet!</p>
+    <button id="startCamera">Kamera Elindítása</button>
+    <button id="captureImage" style="display: none;">Kép Rögzítése</button>
+    <video id="video" autoplay playsinline style="display: none;"></video>
+    <input type="file" id="imageInput" accept="image/png, image/jpeg">
+    <canvas id="canvas" style="display: none;"></canvas>
+    <div id="result">Eredmény itt jelenik meg.</div>
+    <script>
+        const startCameraButton = document.getElementById('startCamera');
+        const captureImageButton = document.getElementById('captureImage');
+        const video = document.getElementById('video');
+        const imageInput = document.getElementById('imageInput');
+        const canvas = document.getElementById('canvas');
+        const resultDiv = document.getElementById('result');
+        const context = canvas.getContext('2d');
+
+        // Referencia képek
+        const banknotes = [
+            { name: '1000 Ft', src: 'banknotes/1000Ft.png' },
+            { name: '2000 Ft', src: 'banknotes/2000Ft.png' },
+            { name: '5000 Ft', src: 'banknotes/5000Ft.png' },
+            { name: '10000 Ft', src: 'banknotes/10000Ft.png' },
+            { name: '20000 Ft', src: 'banknotes/20000Ft.png' }
+        ];
+
+        // Kamera elindítása
+        startCameraButton.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                captureImageButton.style.display = 'inline-block';
+            } catch (err) {
+                alert('Nem sikerült elindítani a kamerát: ' + err.message);
+            }
+        });
+
+        // Kép rögzítése a kameráról
+        captureImageButton.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            processImage();
+        });
+
+        // Kép feltöltése fotótárból
+        imageInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        processImage();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Kép feldolgozása
+        function processImage() {
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            // Itt hívhatod a felismerési modellt vagy egyéb logikát
+            resultDiv.textContent = 'Kép feldolgozása kész, de a felismeréshez szükséges egy modell.';
+        }
+    </script>
+</body>
+</html>
