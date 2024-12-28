@@ -105,10 +105,48 @@
 
         // Kép feldolgozása
         function processImage() {
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            // Itt hívhatod a felismerési modellt vagy egyéb logikát
-            resultDiv.textContent = 'Kép feldolgozása kész, de a felismeréshez szükséges egy modell.';
-        }
+            const uploadedData = context.getImageData(0, 0, canvas.width, canvas.height);
+ let bestMatch = { name: null, score: Infinity };
+
+    // Minden referencia képet ellenőrzünk
+    let processed = 0;
+    banknotes.forEach((banknote) => {
+        const referenceImg = new Image();
+        referenceImg.onload = () => {
+            const refCanvas = document.createElement('canvas');
+            const refContext = refCanvas.getContext('2d');
+            refCanvas.width = canvas.width;
+            refCanvas.height = canvas.height;
+
+            refContext.drawImage(referenceImg, 0, 0, refCanvas.width, refCanvas.height);
+            const referenceData = refContext.getImageData(0, 0, refCanvas.width, refCanvas.height);
+
+            // Pixelkülönbség számítása
+            const diff = calculateDifference(uploadedData.data, referenceData.data);
+            if (diff < bestMatch.score) {
+                bestMatch = { name: banknote.name, score: diff };
+            }
+
+            processed++;
+            if (processed === banknotes.length) {
+                resultDiv.textContent = `Felismerés: ${bestMatch.name} (különbség: ${bestMatch.score.toFixed(2)})`;
+            }
+        };
+        referenceImg.src = banknote.src;
+    });
+}
+
+// Pixelkülönbség kiszámítása
+function calculateDifference(data1, data2) {
+    let sum = 0;
+    for (let i = 0; i < data1.length; i += 4) {
+        const rDiff = data1[i] - data2[i];
+        const gDiff = data1[i + 1] - data2[i + 1];
+        const bDiff = data1[i + 2] - data2[i + 2];
+        sum += rDiff * rDiff + gDiff * gDiff + bDiff * bDiff;
+    }
+    return Math.sqrt(sum / (data1.length / 4));
+}
     </script>
 </body>
 </html>
