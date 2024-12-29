@@ -3,62 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC/RFID Leolvasás</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-        }
-        .message {
-            margin-top: 20px;
-            font-size: 1.2rem;
-        }
-    </style>
+    <title>NFC Olvasó</title>
+    <script>
+        // Az NFC tag olvasásához JavaScript kód
+        document.addEventListener("DOMContentLoaded", function() {
+            // NFC API használat (ha elérhető a böngészőben)
+            if ('NFC' in window) {
+                const reader = new NFCReader();
+                reader.start();
+
+                reader.on('tag', function(tag) {
+                    const tagNumber = tag.serialNumber; // A tag sorozatszáma
+                    alert('Tag száma: ' + tagNumber);
+
+                    // Az NFC tag számának elküldése a PHP oldalra
+                    fetch('192.168.1.207/pdf/process_nfc.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ tagNumber: tagNumber }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Tag sikeresen elküldve:', data);
+                    })
+                    .catch(error => console.error('Hiba:', error));
+                });
+            } else {
+                alert("NFC olvasó nem támogatott ezen a böngészőben.");
+            }
+        });
+    </script>
 </head>
 <body>
-    <h1>NFC/RFID Leolvasó</h1>
-    <p>Helyezd a kártyát az NFC/RFID olvasóhoz.</p>
-    <div class="message" id="message">Várakozás...</div>
-    
-    <script>
-        if ('NDEFReader' in window) {
-            const reader = new NDEFReader();
-            document.getElementById('message').innerText = 'Kész az NFC leolvasásra!';
-
-            async function readTag() {
-                try {
-                    await reader.scan();
-                    reader.onreading = (event) => {
-                        const tagId = event.serialNumber || 'Ismeretlen szériaszám';
-                        document.getElementById('message').innerText = `Tag szériaszám: ${tagId}`;
-                        
-                        // Adatok elküldése a PHP-nak
-                        fetch('192.168.1.207/pdf/process_nfc.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ serialNumber: tagId }),
-                        })
-                        .then(response => response.text())
-                        .then(data => {
-                            console.log('Szerver válasza:', data);
-                        })
-                        .catch(error => {
-                            console.error('Hiba a küldéskor:', error);
-                        });
-                    };
-                } catch (error) {
-                    console.error('Hiba az NFC leolvasásakor:', error);
-                    document.getElementById('message').innerText = 'Nem sikerült olvasni az NFC-t!';
-                }
-            }
-
-            readTag();
-        } else {
-            document.getElementById('message').innerText = 'A böngésződ nem támogatja az NFC-t.';
-        }
-    </script>
+    <h1>NFC Olvasó</h1>
+    <p>Olvasd be a NFC tag-et a telefonoddal.</p>
 </body>
 </html>
