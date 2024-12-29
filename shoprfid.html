@@ -31,7 +31,7 @@
                         log(`> Rekordok száma: ${message.records.length}`);
 
                         // A tag sorozatszámának elküldése a PHP szervernek
-                        const response = await fetch('send_tag.php', {
+                        const response = await fetch('192.168.1.207/pdf/process_nfc.php', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
