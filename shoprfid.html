@@ -34,7 +34,7 @@
                         document.getElementById('message').innerText = `Tag szériaszám: ${tagId}`;
                         
                         // Adatok elküldése a PHP-nak
-                        fetch('192.168.1.207/process_nfc.php', {
+                        fetch('192.168.1.207/pdf/process_nfc.php', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
