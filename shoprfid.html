@@ -2,30 +2,47 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <title>NFC Szériaszám Beolvasása</title>
+    <title>NFC címke olvasása NDEF Reader-rel</title>
     <script>
-        async function readNFC() {
-            try {
-                if ("NFC" in window) {
-                    // NFC olvasó elindítása
-                    const reader = new NFC();
-                    const nfcTag = await reader.scan();
-                    const serialNumber = nfcTag.serialNumber;
-
-                    // Az NFC szériaszám megjelenítése
-                    document.getElementById('nfcSerial').textContent = `Beolvasott szériaszám: ${serialNumber}`;
+        // Funckió, hogy elindítsuk a NDEF olvasót
+        async function startNFC() {
+            if ("NFC" in window) {
+                try {
+                    // Indítjuk a NDEF címke olvasót
+                    const nfc = new NDEFReader();
+                    await nfc.scan(); // Ez elindítja az olvasást
                     
-                    // További feldolgozás itt, pl. POST kéréssel küldhetjük a szériaszámot
-                    sendData(serialNumber);
-                } else {
-                    alert("A Web NFC API nem támogatott ebben a böngészőben.");
+                    // Az olvasás eseménye: egy címke beolvasása
+                    nfc.onreading = event => {
+                        const nfcTag = event.message;
+                        const nfcSerial = readNFCData(nfcTag);
+
+                        // Az adatokat megjelenítjük
+                        document.getElementById('nfcData').textContent = `Beolvasott NFC adat: ${nfcSerial}`;
+                        
+                        // További feldolgozás (pl. POST kérés a szériaszám elküldéséhez)
+                        sendData(nfcSerial);
+                    };
+                } catch (error) {
+                    alert(`Hiba történt az NFC olvasása során: ${error}`);
                 }
-            } catch (error) {
-                alert(`Hiba történt: ${error}`);
+            } else {
+                alert("A Web NFC API nem támogatott ebben a böngészőben.");
             }
         }
 
-        // Az NFC adatokat elküldi egy PHP oldalnak
+        // A NDEF adatok kiolvasása és formázása
+        function readNFCData(tag) {
+            let serialNumber = '';
+            for (const record of tag.records) {
+                if (record.recordType === "text") {
+                    serialNumber = record.data;
+                }
+            }
+            return serialNumber;
+        }
+
+        // Az NFC adatokat elküldjük a PHP oldalnak
         function sendData(serialNumber) {
             const formData = new FormData();
             formData.append("nfcSerial", serialNumber);
@@ -43,9 +60,9 @@
     </script>
 </head>
 <body>
-    <h1>NFC Szériaszám Beolvasása</h1>
-    <button onclick="readNFC()">NFC eszköz beolvasása</button>
-    <p id="nfcSerial">Itt jelenik meg a beolvasott NFC szériaszám.</p>
+    <h1>NFC Címke Olvasása NDEF Reader-rel</h1>
+    <button onclick="startNFC()">NFC címke beolvasása</button>
+    <p id="nfcData">Itt jelenik meg a beolvasott NFC adat.</p>
     <div id="response"></div>
 </body>
 </html>
