@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NFC Olvasó</title>
     <script>
-        // Az NFC tag olvasásához szükséges JavaScript kód
         document.addEventListener("DOMContentLoaded", function() {
             const log = (message) => {
                 console.log(message);
@@ -30,13 +29,17 @@
                         log(`> Sorozatszám: ${serialNumber}`);
                         log(`> Rekordok száma: ${message.records.length}`);
 
-                        // A tag sorozatszámának elküldése a PHP szervernek
+                        // FormData objektum létrehozása
+                        const formData = new FormData();
+                        formData.append("tagNumber", serialNumber);
+
+                        // Loggoljuk a küldött adatot
+                        log("Küldött adat: " + serialNumber);
+
+                        // Az NFC tag számának elküldése a PHP szervernek
                         const response = await fetch('192.168.1.207/pdf/process_nfc.php', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ tagNumber: serialNumber }),
+                            body: formData
                         });
 
                         const data = await response.json();
