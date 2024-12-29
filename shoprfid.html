@@ -5,39 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NFC Olvasó</title>
     <script>
-        // Az NFC tag olvasásához JavaScript kód
+        // Az NFC tag olvasásához szükséges JavaScript kód
         document.addEventListener("DOMContentLoaded", function() {
-            // NFC API használat (ha elérhető a böngészőben)
-            if ('NFC' in window) {
-                const reader = new NFCReader();
-                reader.start();
+            const log = (message) => {
+                console.log(message);
+                document.getElementById("log").innerText += message + "\n";
+            };
 
-                reader.on('tag', function(tag) {
-                    const tagNumber = tag.serialNumber; // A tag sorozatszáma
-                    alert('Tag száma: ' + tagNumber);
+            const scanButton = document.getElementById("scanButton");
 
-                    // Az NFC tag számának elküldése a PHP oldalra
-                    fetch('192.168.1.207/pdf/process_nfc.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ tagNumber: tagNumber }),
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Tag sikeresen elküldve:', data);
-                    })
-                    .catch(error => console.error('Hiba:', error));
-                });
-            } else {
-                alert("NFC olvasó nem támogatott ezen a böngészőben.");
-            }
+            scanButton.addEventListener("click", async () => {
+                log("Felhasználó rákattintott a szkennelés gombra");
+
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan();
+                    log("> Az NFC szkennelés elkezdődött");
+
+                    ndef.addEventListener("readingerror", () => {
+                        log("Hiba történt! Nem sikerült adatot olvasni a NFC tag-ból.");
+                    });
+
+                    ndef.addEventListener("reading", async ({ message, serialNumber }) => {
+                        log(`> Sorozatszám: ${serialNumber}`);
+                        log(`> Rekordok száma: ${message.records.length}`);
+
+                        // A tag sorozatszámának elküldése a PHP szervernek
+                        const response = await fetch('send_tag.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ tagNumber: serialNumber }),
+                        });
+
+                        const data = await response.json();
+                        log(`> Válasz a szervertől: ${data.message}`);
+                    });
+                } catch (error) {
+                    log("Hiba: " + error);
+                }
+            });
         });
     </script>
 </head>
 <body>
     <h1>NFC Olvasó</h1>
-    <p>Olvasd be a NFC tag-et a telefonoddal.</p>
+    <button id="scanButton">Szkennelés</button>
+    <pre id="log"></pre>
 </body>
 </html>
