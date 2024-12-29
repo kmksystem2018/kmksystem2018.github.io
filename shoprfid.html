@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC/RFID Leolvasás</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .message {
+            margin-top: 20px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>NFC/RFID Leolvasó</h1>
+    <p>Helyezd a kártyát az NFC/RFID olvasóhoz.</p>
+    <div class="message" id="message">Várakozás...</div>
+    
+    <script>
+        if ('NDEFReader' in window) {
+            const reader = new NDEFReader();
+            document.getElementById('message').innerText = 'Kész az NFC leolvasásra!';
+
+            async function readTag() {
+                try {
+                    await reader.scan();
+                    reader.onreading = (event) => {
+                        const tagId = event.serialNumber || 'Ismeretlen szériaszám';
+                        document.getElementById('message').innerText = `Tag szériaszám: ${tagId}`;
+                        
+                        // Adatok elküldése a PHP-nak
+                        fetch('192.168.1.207/process_nfc.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ serialNumber: tagId }),
+                        })
+                        .then(response => response.text())
+                        .then(data => {
+                            console.log('Szerver válasza:', data);
+                        })
+                        .catch(error => {
+                            console.error('Hiba a küldéskor:', error);
+                        });
+                    };
+                } catch (error) {
+                    console.error('Hiba az NFC leolvasásakor:', error);
+                    document.getElementById('message').innerText = 'Nem sikerült olvasni az NFC-t!';
+                }
+            }
+
+            readTag();
+        } else {
+            document.getElementById('message').innerText = 'A böngésződ nem támogatja az NFC-t.';
+        }
+    </script>
+</body>
+</html>
