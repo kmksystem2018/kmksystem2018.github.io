@@ -43,14 +43,14 @@
                         })
                         .then(response => response.text())
                         .then(data => {
-                            console.log('Szerver válasza:', data);
+                            alert('Szerver válasza:', data);
                         })
                         .catch(error => {
-                            console.error('Hiba a küldéskor:', error);
+                            alert('Hiba a küldéskor:', error);
                         });
                     };
                 } catch (error) {
-                    console.error('Hiba az NFC leolvasásakor:', error);
+                    alert('Hiba az NFC leolvasásakor:', error);
                     document.getElementById('message').innerText = 'Nem sikerült olvasni az NFC-t!';
                 }
             }
