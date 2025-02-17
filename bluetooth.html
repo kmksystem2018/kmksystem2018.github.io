@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Bluetooth</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; font-size: 18px; cursor: pointer; }
+        #status { margin-top: 20px; font-size: 18px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Web Vezérlő</h1>
+    <button onclick="connectToweb()">🔗 Csatlakozás az eszközözz</button>
+    <div id="status">⚠️ Nem csatlakoztál</div>
+
+    <h2>Motorvezérlés</h2>
+    <button onclick="moveMotor(0x00, 50)">⬆️ Motor A Előre</button>
+    <button onclick="moveMotor(0x00, -50)">⬇️ Motor A Hátra</button>
+    <br>
+    <button onclick="moveMotor(0x01, 50)">➡️ Motor B Előre</button>
+    <button onclick="moveMotor(0x01, -50)">⬅️ Motor B Hátra</button>
+    <br>
+    <button onclick="stopMotor()">🛑 Stop</button>
+
+    <script>
+        let webCharacteristic;
+
+        async function connectToweb() {
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['00001623-1212-efde-1623-785feabcd123']
+                });
+
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('00001623-1212-efde-1623-785feabcd123');
+                webCharacteristic = await service.getCharacteristic('00001624-1212-efde-1623-785feabcd123');
+
+                document.getElementById('status').innerText = "✅ Sikeres csatlakozás!";
+                console.log("✅ csatlakoztatva!");
+            } catch (error) {
+                console.error("❌ Hiba történt:", error);
+                document.getElementById('status').innerText = "❌ Hiba a csatlakozáskor!";
+            }
+        }
+
+        async function moveMotor(port, speed) {
+            if (!webCharacteristic) {
+                alert("🔌 Először csatlakozz!");
+                return;
+            }
+            const command = new Uint8Array([0x08, 0x00, 0x81, port, 0x11, 0x51, 0x00, speed]);
+            await webCharacteristic.writeValue(command);
+            console.log(`🔧 Motor ${port === 0x00 ? "A" : "B"} mozgásba hozva ${speed} sebességgel!`);
+        }
+
+        async function stopMotor() {
+            if (!webCharacteristic) {
+                alert("🔌 Először csatlakozz!");
+                return;
+            }
+            const command = new Uint8Array([0x08, 0x00, 0x81, 0x00, 0x11, 0x51, 0x00, 0x00]);
+            await webCharacteristic.writeValue(command);
+            console.log("🛑 Motorok leállítva!");
+        }
+    </script>
+
+</body>
+</html>
